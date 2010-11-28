@@ -50,6 +50,7 @@ public class CodeWriter {
             writer.write("@SP\n");
             writer.write("M=D\n");
         }
+        writer.write("\n");
     }
 
     /**
@@ -59,35 +60,56 @@ public class CodeWriter {
      * @throws IOException
      */
     private void writeCompare(String operator) throws IOException {
-        writer.write("M=M-D\n");
-        writer.write("D=-1\n");
+        writer.write("D=M-D\n");
+        writer.write("@R13\n");
+        writer.write("M=-1\n");
         writer.write("@TRUE"+jumpCounter+"\n");
 
         if(operator.equals("lt")){
-            writer.write("M;JLT\n");
+            writer.write("D;JLT\n");
         }
         else if(operator.equals("gt")){
-            writer.write("M;JGT\n");
+            writer.write("D;JGT\n");
         }
-         else {
-            writer.write("M;JEQ\n");                                    
+        else {
+            writer.write("D;JEQ\n");
         }
-        // if the condition holds we skip this line:
-        writer.write("D=0\n");
+        // if the condition holds we skip this part:
+        writer.write("@R13\n");
+        writer.write("M=0\n");
+
         writer.write("(TRUE"+jumpCounter+")\n");
         jumpCounter++;
         // now update the result:
+        writer.write("@R13\n");
+        writer.write("D=M\n");
         writer.write("@SP\n");
         writer.write("A=M-1\n");
         writer.write("A=A-1\n");
         writer.write("M=D\n");
+        writer.write("\n");
     }
 
-    public void writePushPop(String segment, int index) {
-        //To change body of created methods use File | Settings | File Templates.
+    public void writePush(String segment, int index) throws IOException {
+        if(segment.equals("constant")){
+            writer.write("@"+index+"\n");
+            writer.write("D=A\n");
+        }
+        // once the correct value is in D we can push it to the top of the stack:
+        writer.write("@SP\n");
+        writer.write("A=M\n");
+        writer.write("M=D\n");
+        writer.write("D=A+1\n");
+        writer.write("@SP\n");
+        writer.write("M=D\n");
+        writer.write("\n");
     }
 
     public void close() throws IOException {
         writer.close();
+    }
+
+    public void writePop(String segment, int index) throws IOException {
+        writer.write("\n");
     }
 }
