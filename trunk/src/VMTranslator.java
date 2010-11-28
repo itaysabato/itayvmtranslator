@@ -15,53 +15,63 @@ public class VMTranslator {
         File input = new File(arguments[0]);
         File output = new File(arguments[0].replaceAll(".vm", "")+".asm");
         CodeWriter codeWriter = null;
+
         try {
             codeWriter = new CodeWriter(output);
-        }
-        catch (IOException e) {
-            System.out.println("Failed to open output stream");
-            System.exit(0);
-        }
 
-        if(input.isDirectory()){
-            File[] files = input.listFiles();
-            for(File file: files){
-                try {
+            if(input.isDirectory()){
+                File[] files = input.listFiles();
+                for(File file: files){
                     if(file.isFile()) translate(file, codeWriter);
                 }
-                catch (FileNotFoundException e) {
-                    System.out.println("File not found: "+file);
+            }
+            else if(input.isFile()) translate(input, codeWriter);
+        }
+        catch (FileNotFoundException e) {
+            System.out.println("File not found: "+e.getMessage());
+        }
+        catch (IOException e) {
+            System.out.println("Failed writing to output stream: "+e.getMessage());
+        }
+        finally {
+            if(codeWriter != null){
+                try {
+                    codeWriter.close();
+                }
+                catch (IOException e) {
+                    System.out.println("Failed closing output stream: "+e.getMessage());
                 }
             }
         }
     }
 
-    private static void translate(File file, CodeWriter codeWriter) throws FileNotFoundException {
+    private static void translate(File file, CodeWriter codeWriter) throws IOException {
         Parser parser = new Parser(file);
         try {
-        while(parser.advance()){
-            CommandType command = parser.commandType();
-            if(command == CommandType.ARITHMETIC){
-                codeWriter.writeArithmetic(parser.first());
+            while(parser.advance()){
+                CommandType command = parser.commandType();
+                if(command == CommandType.ARITHMETIC){
+                    codeWriter.writeArithmetic(parser.first());
+                }
+                else {
+                    String segment =  parser.first();
+                    int index =  parser.second();
+
+                    if(command == CommandType.PUSH){
+                        codeWriter.writePush(segment, index);
+                    }
+                    else if(command == CommandType.POP){
+                        codeWriter.writePop(segment, index);                             
+                    }
+                }
             }
-            else {
-                String segment =  parser.first();
-                int index =  parser.second();
-                codeWriter.writePushPop(segment, index);
-            }
-        }
         }
         catch(IOException e) {
-            System.out.println("Failed writing to file"); 
+            System.out.println("Failed writing to file");
+            throw  e;
         }
         finally {
             parser.close();
-            try {
-                codeWriter.close();
-            }
-            catch (IOException e1) {
-                System.out.println("Failed closing output stream");
-            }
         }
     }
 }
