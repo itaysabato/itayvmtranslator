@@ -11,10 +11,14 @@ import java.io.IOException;
  */
 public class CodeWriter {
     FileWriter writer;
+    String fileName;
     int jumpCounter = 0;
+    private static final int TEMP = 5;
+    private static final int THIS = 3;
 
     public CodeWriter(File output) throws IOException {
         writer = new FileWriter(output);
+        fileName = output.getName().replaceAll(".asm", "");
     }
 
     public void writeArithmetic(String operator) throws IOException {
@@ -95,6 +99,10 @@ public class CodeWriter {
             writer.write("@"+index+"\n");
             writer.write("D=A\n");
         }
+        else{
+            writeLoadA(segment, index);
+            writer.write("D=M\n");
+        }
         // once the correct value is in D we can push it to the top of the stack:
         writer.write("@SP\n");
         writer.write("A=M\n");
@@ -105,11 +113,73 @@ public class CodeWriter {
         writer.write("\n");
     }
 
-    public void close() throws IOException {
-        writer.close();
+    /**
+     * writes the commands for loading the
+     * correct (final)  address into the A-Register.
+     * @param segment
+     * @param index
+     * @throws IOException
+     */
+    private void writeLoadA(String segment, int index) throws IOException {
+        boolean direct;
+        String address = "";
+
+        if(direct = segment.equals("temp")){
+            address = "R"+(TEMP+index);
+        }
+        else if(direct = segment.equals("pointer")){
+            address = "R"+(THIS+index);
+        }
+        else if(direct = segment.equals("static")){
+            address = fileName+"."+index;
+        }
+        else if(segment.equals("local")){
+            address = "LCL";
+        }
+        else if(segment.equals("argument")){
+            address = "ARG";
+        }
+        else if(segment.equals("this")){
+            address = "THIS";
+        }
+        else if(segment.equals("that")){
+            address = "THAT";
+        }
+
+        writer.write("@"+address+"\n");
+        if(!direct){
+            writer.write("D=M\n");
+            writer.write("@"+index+"\n");
+            writer.write("A=D+A\n");
+        }
     }
 
     public void writePop(String segment, int index) throws IOException {
+        writeLoadA(segment, index);
+
+        // save the address in the temporary register:
+        writer.write("D=A\n");
+        writer.write("@R13\n");
+        writer.write("M=D\n");
+
+        // save the value of the top of the stack in D:
+        writer.write("@SP\n");
+        writer.write("A=M\n");
+        writer.write("A=A-1\n");
+        writer.write("D=M\n");
+
+        // store the value in the correct address:
+        writer.write("@R13\n");
+        writer.write("A=M\n");
+        writer.write("M=D\n");
+
+        // update stack pointer:
+        writer.write("@SP\n");
+        writer.write("M=M-1\n");
         writer.write("\n");
+    }
+
+    public void close() throws IOException {
+        writer.close();
     }
 }
