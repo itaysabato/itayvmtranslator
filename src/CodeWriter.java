@@ -10,15 +10,20 @@ import java.io.IOException;
  * Time: 19:43:02 <br/>
  */
 public class CodeWriter {
-    FileWriter writer;
-    String fileName;
-    int jumpCounter = 0;
+
     private static final int TEMP = 5;
     private static final int THIS = 3;
 
+    private FileWriter writer;
+    private String fileName;
+    private int jumpCounter = 0;
+
     public CodeWriter(File output) throws IOException {
         writer = new FileWriter(output);
-        fileName = output.getName().replaceAll(".asm", "");
+    }
+
+    public void setFileName(String fileName) {
+         this.fileName = fileName;
     }
 
     public void writeArithmetic(String operator) throws IOException {
