@@ -12,8 +12,15 @@ import java.io.IOException;
 public class VMTranslator {
 
     public static void main(String[] arguments) {
-        File input = new File(arguments[0]);
-        File output = new File(arguments[0].replaceAll(".vm", "")+".asm");
+        File input = new File(arguments[0]);       
+        File output;
+        
+        if(input.isDirectory()){
+        	String child = new File(arguments[0].replaceAll(".vm", "")+".asm").getName();
+        	output = new File(input, child);
+        }
+        else output = new File(arguments[0].replaceAll(".vm", "")+".asm");
+        
         CodeWriter codeWriter = null;
 
         try {
@@ -22,7 +29,7 @@ public class VMTranslator {
             if(input.isDirectory()){
                 File[] files = input.listFiles();
                 for(File file: files){
-                    if(file.isFile()) translate(file, codeWriter);
+                    if(file.isFile() && file.getName().endsWith(".vm")) translate(file, codeWriter);
                 }
             }
             else if(input.isFile()) translate(input, codeWriter);
@@ -47,6 +54,8 @@ public class VMTranslator {
 
     private static void translate(File file, CodeWriter codeWriter) throws IOException {
         Parser parser = new Parser(file);
+        codeWriter.setFileName(file.getName().replaceAll(".vm",""));
+        
         try {
             while(parser.advance()){
                 CommandType command = parser.commandType();
