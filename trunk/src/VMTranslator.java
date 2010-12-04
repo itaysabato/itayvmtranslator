@@ -12,19 +12,20 @@ import java.io.IOException;
 public class VMTranslator {
 
     public static void main(String[] arguments) {
-        File input = new File(arguments[0]);       
+        File input = new File(arguments[0]);
         File output;
-        
+
         if(input.isDirectory()){
-        	String child = new File(arguments[0].replaceAll(".vm", "")+".asm").getName();
-        	output = new File(input, child);
+            String child = new File(arguments[0].replaceAll(".vm", "")+".asm").getName();
+            output = new File(input, child);
         }
         else output = new File(arguments[0].replaceAll(".vm", "")+".asm");
-        
+
         CodeWriter codeWriter = null;
 
         try {
             codeWriter = new CodeWriter(output);
+            codeWriter.writeInit();
 
             if(input.isDirectory()){
                 File[] files = input.listFiles();
@@ -55,22 +56,43 @@ public class VMTranslator {
     private static void translate(File file, CodeWriter codeWriter) throws IOException {
         Parser parser = new Parser(file);
         codeWriter.setFileName(file.getName().replaceAll(".vm",""));
-        
+
         try {
             while(parser.advance()){
                 CommandType command = parser.commandType();
-                if(command == CommandType.ARITHMETIC){
+
+                if(command == CommandType.RETURN){
+                    codeWriter.writeReturn();
+                }
+                else if(command == CommandType.ARITHMETIC){
                     codeWriter.writeArithmetic(parser.first());
                 }
+                else if(command == CommandType.LABEL){
+                    codeWriter.writeLabel(parser.first());
+                }
+                else if(command == CommandType.GOTO){
+                    codeWriter.writeGoto(parser.first());
+                }
+                else if(command == CommandType.IF){
+                    codeWriter.writeIf(parser.first());
+                }
                 else {
-                    String segment =  parser.first();
-                    int index =  parser.second();
+                    String first =  parser.first();
+                    int second =  parser.second();
+
+                    if(command == CommandType.FUNCTION){
+                        codeWriter.writeFunction(first, second);
+                    }
+
+                    if(command == CommandType.CALL){
+                        codeWriter.writeCall(first, second);
+                    }
 
                     if(command == CommandType.PUSH){
-                        codeWriter.writePush(segment, index);
+                        codeWriter.writePush(first, second);
                     }
                     else if(command == CommandType.POP){
-                        codeWriter.writePop(segment, index);                             
+                        codeWriter.writePop(first, second);
                     }
                 }
             }

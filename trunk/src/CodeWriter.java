@@ -16,14 +16,20 @@ public class CodeWriter {
 
     private FileWriter writer;
     private String fileName;
+    private String functionName = "";
     private int jumpCounter = 0;
+    private int returnCounter = 0;
 
     public CodeWriter(File output) throws IOException {
         writer = new FileWriter(output);
     }
 
+    public void writeInit() {
+        //To change body of created methods use File | Settings | File Templates.
+    }
+
     public void setFileName(String fileName) {
-         this.fileName = fileName;
+        this.fileName = fileName;
     }
 
     public void writeArithmetic(String operator) throws IOException {
@@ -184,7 +190,111 @@ public class CodeWriter {
         writer.write("\n");
     }
 
+    public void writeLabel(String label) throws IOException {
+        writer.write("("+functionName+"$"+label+")\n");
+    }
+
+    public void writeGoto(String label) throws IOException {
+        writer.write("@"+functionName+"$"+label+"\n");
+        writer.write("0;JUMP\n");
+        writer.write("\n");
+    }
+
+    public void writeIf(String label) throws IOException {
+        // pop  to D
+        writer.write("@SP\n");
+        writer.write("A=M\n");
+        writer.write("A=A-1\n");
+        writer.write("D=M\n");
+        // update SP
+        writer.write("@SP\n");
+        writer.write("M=M-1\n");
+        // jump
+        writer.write("@"+functionName+"$"+label+"\n");
+        writer.write("D;JNE\n");
+        writer.write("\n");
+    }
+
+    public void writeCall(String name, int numArguments) throws IOException {
+        writeMyPush("RETURN"+returnCounter, "A");
+        writeMyPush("LCL", "M");
+        writeMyPush("ARG", "M");
+        writeMyPush("THIS", "M");
+        writeMyPush("THAT", "M");
+
+        // update ARG:
+        writer.write("@"+(numArguments + 5)+"\n");
+        writer.write("D=A\n");
+        writer.write("@SP\n");
+        writer.write("D=A-D\n");
+        writer.write("@ARG\n");
+        writer.write("M=D\n");
+
+        //update LCL:
+        writer.write("@SP\n");
+        writer.write("D=A\n");
+        writer.write("@LCL\n");
+        writer.write("M=D\n");
+
+        //jump:
+        writer.write("@"+name+"\n");
+        writer.write("0;JUMP\n");
+        writer.write("(RETURN"+returnCounter+")\n");
+        returnCounter++;
+        writer.write("\n");
+    }
+
+    private void writeMyPush(String address, String MOrA) throws IOException {
+        writer.write("@"+address+"\n");
+        writer.write("D="+MOrA+"\n");
+        writer.write("@SP\n");
+        writer.write("A=M\n");
+        writer.write("M=D\n");
+        writer.write("D=A+1\n");
+        writer.write("@SP\n");
+        writer.write("M=D\n");
+    }
+
+    public void writeFunction(String name, int numLocals) throws IOException {
+        functionName = name;
+        writer.write("("+functionName+")\n");
+        for(int i = 0; i < numLocals; i++){
+            writePush("constant", 0);
+        }
+    }
+
+    public void writeReturn() throws IOException {
+        writePop("ARG", 0);
+
+        //update SP:
+        writer.write("@ARG\n");
+        writer.write("D=A+1\n");
+        writer.write("@SP\n");
+        writer.write("M=D\n");
+
+        writeRestore(5,"R13");        
+        for(int i = 1; i < 5; i++){
+             writeRestore(i,"R"+(5-i));
+        }
+
+        writer.write("@R13\n");
+        writer.write("0;JUMP\n");
+        writer.write("\n");        
+        functionName = "";
+    }
+
+    private void writeRestore(int i, String register) throws IOException {
+        writer.write("@LCL\n");
+        for(int j = 0; j < i; j++){
+            writer.write("A=A-1\n");
+        }
+        writer.write("D=M\n");
+        writer.write("@"+register+"\n");
+        writer.write("M=D\n");
+    }
+
     public void close() throws IOException {
         writer.close();
     }
+
 }
