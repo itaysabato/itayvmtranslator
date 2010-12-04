@@ -19,13 +19,18 @@ public class CodeWriter {
     private String functionName = "";
     private int jumpCounter = 0;
     private int returnCounter = 0;
+    private static final int INIT_SP = 256;
 
     public CodeWriter(File output) throws IOException {
         writer = new FileWriter(output);
     }
 
-    public void writeInit() {
-        //To change body of created methods use File | Settings | File Templates.
+    public void writeInit() throws IOException {
+        writer.write("@"+INIT_SP+"\n");
+        writer.write("D=A\n");
+        writer.write("@SP\n");
+        writer.write("M=D\n");
+        writeCall("Sys.init", 0);
     }
 
     public void setFileName(String fileName) {
@@ -296,5 +301,4 @@ public class CodeWriter {
     public void close() throws IOException {
         writer.close();
     }
-
 }
