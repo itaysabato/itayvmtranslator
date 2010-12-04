@@ -31,33 +31,57 @@ public class Parser {
         return false;
     }
 
-     /**
+    /**
      *   returns the command type.
+     * @return the command type
      */
     public CommandType commandType()  {
-         CommandType result;
+        CommandType result;
+        boolean readNext = true;
 
         if(token.equals("push")){
             result =  CommandType.PUSH;
-            token = source.next();
         }
         else if(token.equals("pop")){
             result = CommandType.POP;
-            token = source.next();
         }
-         else result = CommandType.ARITHMETIC;
-         return result;
+        else if(token.equals("function")){
+            result = CommandType.FUNCTION;
+        }
+        else if(token.equals("call")){
+            result = CommandType.CALL;
+        }
+        else if(token.equals("label")){
+            result = CommandType.LABEL;
+        }
+        else if(token.equals("goto")){
+            result = CommandType.GOTO;
+        }
+        else if(token.equals("if")){
+            result = CommandType.IF;
+        }
+        else {
+            readNext = false;
+            if(token.equals("return")){
+                result = CommandType.RETURN;
+            }
+            else result = CommandType.ARITHMETIC;
+        }
+
+        if(readNext) token = source.next();
+
+        return result;
     }
 
-     public String  first() {
-         return token;
-     }
+    public String  first() {
+        return token;
+    }
 
-      public int  second() {
-         return source.nextInt();
-     }
+    public int  second() {
+        return source.nextInt();
+    }
 
-      /**
+    /**
      *    closes the file.
      */
     public void close() {
