@@ -25,7 +25,7 @@ public class VMTranslator {
 
         try {
             codeWriter = new CodeWriter(output);
-            codeWriter.writeInit();
+//            codeWriter.writeInit();
 
             if(input.isDirectory()){
                 File[] files = input.listFiles();
