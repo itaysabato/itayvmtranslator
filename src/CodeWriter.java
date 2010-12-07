@@ -91,7 +91,7 @@ public class CodeWriter {
         else if(operator.equals("gt")){
             writer.write("D;JGT\n");
         }
-        else {
+        else if(operator.equals("eq")){
             writer.write("D;JEQ\n");
         }
         // if the condition holds we skip this part:
@@ -201,7 +201,7 @@ public class CodeWriter {
 
     public void writeGoto(String label) throws IOException {
         writer.write("@"+functionName+"$"+label+"\n");
-        writer.write("0;JUMP\n");
+        writer.write("0;JMP\n");
         writer.write("\n");
     }
 
@@ -231,19 +231,21 @@ public class CodeWriter {
         writer.write("@"+(numArguments + 5)+"\n");
         writer.write("D=A\n");
         writer.write("@SP\n");
+        writer.write("A=M\n");       
         writer.write("D=A-D\n");
         writer.write("@ARG\n");
         writer.write("M=D\n");
 
         //update LCL:
         writer.write("@SP\n");
+        writer.write("A=M\n");
         writer.write("D=A\n");
         writer.write("@LCL\n");
         writer.write("M=D\n");
 
         //jump:
         writer.write("@"+name+"\n");
-        writer.write("0;JUMP\n");
+        writer.write("0;JMP\n");
         writer.write("(RETURN"+returnCounter+")\n");
         returnCounter++;
         writer.write("\n");
@@ -269,33 +271,41 @@ public class CodeWriter {
     }
 
     public void writeReturn() throws IOException {
-        writePop("ARG", 0);
+        writer.write("// restore RET\n");          //
+        writeRestore(5,"R14");
+
+        writer.write("// pop ARG\n");                    //
+        writePop("argument", 0);
 
         //update SP:
+        writer.write("// SP = ARG +1\n");                 //
         writer.write("@ARG\n");
-        writer.write("D=A+1\n");
+        writer.write("D=M+1\n");
         writer.write("@SP\n");
         writer.write("M=D\n");
 
-        writeRestore(5,"R13");        
+        writer.write("// restore ALL\n");           //
         for(int i = 1; i < 5; i++){
              writeRestore(i,"R"+(5-i));
         }
 
-        writer.write("@R13\n");
-        writer.write("0;JUMP\n");
+        writer.write("// jump\n");                   //
+        writer.write("@R14\n");
+        writer.write("A=M\n");        
+        writer.write("0;JMP\n");
         writer.write("\n");        
-        functionName = "";
     }
 
     private void writeRestore(int i, String register) throws IOException {
         writer.write("@LCL\n");
+        writer.write("A=M\n");
         for(int j = 0; j < i; j++){
             writer.write("A=A-1\n");
         }
         writer.write("D=M\n");
         writer.write("@"+register+"\n");
         writer.write("M=D\n");
+        writer.write("\n");
     }
 
     public void close() throws IOException {

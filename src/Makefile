@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Makefile for Java project 7
+# Makefile for Java project 8
 #
 # Students:
 # Itay Sabato, ID 036910008, itay.sabato@cs.huji.ac.il
@@ -16,7 +16,7 @@ EXEC=VMtranslator
 
 TAR=tar
 TARFLAGS=cvf
-TARNAME=project7.tar
+TARNAME=project8.tar
 TARSRCS= README Makefile $(EXEC) *.java
 
 all: compile

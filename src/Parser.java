@@ -57,7 +57,7 @@ public class Parser {
         else if(token.equals("goto")){
             result = CommandType.GOTO;
         }
-        else if(token.equals("if")){
+        else if(token.equals("if-goto")){
             result = CommandType.IF;
         }
         else {
